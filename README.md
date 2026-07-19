@@ -2,6 +2,16 @@
 
 An open-source, automated updater for the Google Antigravity ecosystem (Antigravity and Antigravity IDE).
 
+### Why This Project Exists
+On Linux, the official update mechanism for Antigravity is far from ideal. Every time a new version is released, users must manually download, extract, replace the old files, and reconfigure settings, which is tedious and troublesome for most users.
+
+To solve this pain point, this project provides a fully automated solution.
+
+Once you have this script installed, updating is as simple as:
+1. Download the latest `.tar.gz` archive from the official website.
+2. Right-click the downloaded archive and choose **Scripts -> Update Antigravity**.
+3. The script will automatically handle the entire upgrade process (supports upgrading both `Antigravity 2.0` and `Antigravity IDE`).
+
 ## Features
 
 * **Multi-Language UI**: Automatically detects the system locale. Provides English and Traditional Chinese interfaces (Simplified Chinese locales will fall back to Traditional Chinese).
