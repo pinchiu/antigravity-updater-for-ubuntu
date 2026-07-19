@@ -73,6 +73,40 @@ def zenity_message(msg_type, text):
     """Show GUI prompt using Zenity"""
     subprocess.run(["zenity", f"--{msg_type}", "--text", text, "--title", _("title")], check=False)
 
+def extract_asar_file(asar_path, target_file, dest_path):
+    """Extract a single file from Electron asar archive without npm dependency"""
+    import struct
+    import json
+    try:
+        with open(asar_path, 'rb') as f:
+            header_info = f.read(16)
+            if len(header_info) < 16:
+                return False
+            uint_size, header_size, header_string_size, header_json_size = struct.unpack('<IIII', header_info)
+            header_json = f.read(header_json_size).decode('utf-8')
+            header = json.loads(header_json)
+            
+            node = header
+            for part in target_file.strip('/').split('/'):
+                if 'files' in node and part in node['files']:
+                    node = node['files'][part]
+                else:
+                    return False
+            
+            if 'size' not in node or 'offset' not in node:
+                return False
+                
+            size = node['size']
+            offset = int(node['offset'])
+            f.seek(header_size + 8 + offset)
+            data = f.read(size)
+            with open(dest_path, 'wb') as out:
+                out.write(data)
+            return True
+    except Exception as e:
+        sys.stderr.write(f"Warning: Failed to extract {target_file} from ASAR: {e}\n")
+        return False
+
 def update_desktop_launchers():
     """Rebuild desktop launcher shortcuts to ensure correct links"""
     app_dir = os.path.expanduser("~/.local/share/applications")
@@ -83,12 +117,16 @@ def update_desktop_launchers():
     hub_exe = f"{home}/.local/share/antigravity/antigravity"
     if os.path.exists(hub_exe):
         hub_desktop = os.path.join(app_dir, "antigravity.desktop")
+        hub_icon = f"{home}/.local/share/antigravity/antigravity.png"
+        if not os.path.exists(hub_icon):
+            hub_icon = f"{home}/.local/share/antigravity/antigravity.svg"
+            
         hub_content = f"""\
 [Desktop Entry]
 Name=Antigravity 2.0
 Comment=Antigravity Desktop Application
 Exec={home}/.local/share/antigravity/antigravity --no-sandbox %F
-Icon={home}/.local/share/antigravity/antigravity.svg
+Icon={hub_icon}
 Type=Application
 Categories=Development;IDE;
 Terminal=false
@@ -106,6 +144,8 @@ StartupWMClass=antigravity
     if os.path.exists(ide_exe_primary) or os.path.exists(ide_exe_fallback):
         ide_desktop = os.path.join(app_dir, "antigravity-ide.desktop")
         ide_icon = f"{home}/.local/share/antigravity-ide/antigravity-ide.svg"
+        if not os.path.exists(ide_icon):
+            ide_icon = f"{home}/.local/share/antigravity/antigravity.png"
         if not os.path.exists(ide_icon):
             ide_icon = f"{home}/.local/share/antigravity/antigravity.svg"
             
@@ -270,6 +310,11 @@ def main():
                         os.remove(app_link)
                     os.symlink(target_exe, app_link)
 
+                # Extract icon from ASAR
+                asar_path = os.path.join(app_dir, "resources", "app.asar")
+                if os.path.exists(asar_path):
+                    extract_asar_file(asar_path, "icon.png", os.path.join(app_dir, "antigravity.png"))
+
             elif product_type == "ide":
                 extracted_folder = os.path.join(tmpdir, "Antigravity IDE")
                 if not os.path.exists(extracted_folder):
@@ -288,6 +333,14 @@ def main():
                     if os.path.exists(ide_link) or os.path.islink(ide_link):
                         os.remove(ide_link)
                     os.symlink(target_exe, ide_link)
+
+                # Copy icon from internal resources
+                src_icon = os.path.join(ide_dir, "resources", "app", "out", "vs", "platform", "browserOnboarding", "static", "antigravity.svg")
+                if os.path.exists(src_icon):
+                    try:
+                        shutil.copy(src_icon, os.path.join(ide_dir, "antigravity-ide.svg"))
+                    except Exception as e:
+                        sys.stderr.write(f"Warning: Failed to copy IDE icon: {e}\n")
 
         # 2. Rebuild desktop shortcuts
         set_progress(80, _("updating_cache"))
