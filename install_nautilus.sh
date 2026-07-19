@@ -79,6 +79,10 @@ cp "$UPDATE_SCRIPT" "$TARGET_LINK"
 # 確保目的地腳本具備可執行權限
 chmod +x "$TARGET_LINK"
 
+# 清除舊版本可能遺留的舊檔名（防止右鍵選單出現重複項目）
+rm -f "$TARGET_DIR/更新 Antigravity"
+rm -f "$TARGET_DIR/更新 Antigravity 產品"
+
 echo ""
 echo "Done! / 安裝成功！"
 echo "   Script installed at: $TARGET_LINK"
