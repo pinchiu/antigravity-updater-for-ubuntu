@@ -69,7 +69,7 @@ cd antigravity-updater
 bash install_nautilus.sh
 ```
 > [!TIP]
-> The script automatically resolves its absolute path and creates the correct symbolic links, completely eliminating the need for you to worry about running it from the exact right directory.
+> The script automatically copies the updater to the right-click menu scripts folder. You can safely delete the downloaded `antigravity-updater` directory after installation without breaking the menu shortcut. When a new version is released in the future, simply run the new install script to overwrite the old version.
 
 ## Usage
 

@@ -73,16 +73,18 @@ echo "Installing Nautilus context menu script..."
 echo "正在安裝 Nautilus 右鍵選單指令碼..."
 mkdir -p "$TARGET_DIR"
 
-# 強制建立軟連結 (若已存在舊連結或檔案，會直接覆蓋)
-ln -sf "$UPDATE_SCRIPT" "$TARGET_LINK"
+# 複製 python 腳本到目的地（覆蓋舊版），這樣使用者安裝完後就可以安全刪除下載的資料夾
+cp "$UPDATE_SCRIPT" "$TARGET_LINK"
 
-# 確保來源 python 腳本具備可執行權限
-chmod +x "$UPDATE_SCRIPT"
+# 確保目的地腳本具備可執行權限
+chmod +x "$TARGET_LINK"
 
 echo ""
 echo "Done! / 安裝成功！"
-echo "   Symlink created at: $TARGET_LINK"
-echo "   已將捷徑建立於: $TARGET_LINK"
+echo "   Script installed at: $TARGET_LINK"
+echo "   已將腳本安裝於: $TARGET_LINK"
+echo "   (You can now safely delete the downloaded installation folder.)"
+echo "   (您現在可以安全刪除下載的安裝資料夾。)"
 echo ""
 echo "   Right-click any .tar.gz file -> Scripts -> Update Antigravity"
 echo "   對著任何 .tar.gz 檔案點擊右鍵 -> 腳本 (Scripts) -> Update Antigravity"
