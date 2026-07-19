@@ -73,7 +73,7 @@ bash install_nautilus.sh
 
 ### Method 1: Nautilus File Manager (Recommended)
 This is the easiest way to update. Once you've set up the Nautilus script:
-1. Download the latest Antigravity `.tar.gz` package (e.g., `Antigravity-linux-x64.tar.gz` or `Antigravity-IDE-linux.tar.gz`).
+1. Download the latest Antigravity package (e.g., `Antigravity.tar.gz` or `Antigravity IDE.tar.gz`).
 2. Right-click the downloaded file in your file manager.
 3. Select **Scripts -> Update Antigravity**.
 4. The GUI will appear and guide you through the update process, showing a progress bar.
@@ -88,7 +88,7 @@ A file picker will open allowing you to choose the `.tar.gz` file you downloaded
 ### Method 3: Command Line (Direct Mode)
 If you prefer not to use the file picker, you can pass the path to the downloaded archive directly as an argument:
 ```bash
-./update.py /path/to/Antigravity-linux-x64.tar.gz
+./update.py /path/to/Antigravity.tar.gz
 ```
 
 ## How It Works (Hot Swapping)

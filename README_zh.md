@@ -73,7 +73,7 @@ bash install_nautilus.sh
 
 ### 方式一：Nautilus 檔案管理員（推薦）
 這是最簡單的更新方式。在設定好 Nautilus 腳本後：
-1. 下載最新版的 Antigravity `.tar.gz` 壓縮包（例如：`Antigravity-linux-x64.tar.gz` 或 `Antigravity-IDE-linux.tar.gz`）。
+1. 下載最新版的 Antigravity 壓縮包（例如：`Antigravity.tar.gz` 或 `Antigravity IDE.tar.gz`）。
 2. 在檔案管理員中，對著下載好的檔案點擊「右鍵」。
 3. 選擇 **指令碼 (Scripts) -> Update Antigravity**。
 4. 圖形介面會自動啟動，並顯示進度條引導您完成更新。
@@ -88,7 +88,7 @@ bash install_nautilus.sh
 ### 方式三：終端機執行（直接指定檔案）
 如果您不想透過檔案選擇器，也可以直接將壓縮檔的路徑作為參數傳遞給腳本：
 ```bash
-./update.py ~/Downloads/Antigravity-linux-x64.tar.gz
+./update.py ~/Downloads/Antigravity.tar.gz
 ```
 
 ## 運作原理 (熱更新)
