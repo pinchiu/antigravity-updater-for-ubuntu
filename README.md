@@ -1,5 +1,7 @@
 # Antigravity Updater
 
+[繁體中文](README_zh.md) | English
+
 An open-source, automated updater for the Google Antigravity ecosystem (Antigravity and Antigravity IDE).
 
 ### Why This Project Exists

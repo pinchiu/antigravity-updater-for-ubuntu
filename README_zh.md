@@ -1,5 +1,7 @@
 # Antigravity 更新器
 
+繁體中文 | [English](README.md)
+
 一個開源、自動化的 Google Antigravity 生態系統更新工具（支援 Antigravity 與 Antigravity IDE）。
 
 ### 為什麼有這個專案？
