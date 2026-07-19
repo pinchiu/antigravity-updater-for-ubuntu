@@ -8,7 +8,9 @@
 為了解決這個痛點，本專案提供了一個全自動化的解決方案。
 
 您只要設定好此腳本，未來的更新流程就只需要：
-1. 前往官網下載最新版的 `.tar.gz` 壓縮檔。
+1. 前往官網下載最新版的 `.tar.gz` 壓縮檔：
+   - 若要更新 **Antigravity 2.0 (主程式)**：請下載 `Antigravity.tar.gz`
+   - 若要更新 **Antigravity IDE**：請下載 `Antigravity IDE.tar.gz`
 2. 對著該壓縮檔點擊**右鍵**，選擇 **指令碼 (Scripts) -> Update Antigravity**。
 3. 程式即會自動幫您完成所有升級步驟（支援 `Antigravity 2.0` 與 `Antigravity IDE`）。
 
@@ -73,7 +75,9 @@ bash install_nautilus.sh
 
 ### 方式一：Nautilus 檔案管理員（推薦）
 這是最簡單的更新方式。在設定好 Nautilus 腳本後：
-1. 下載最新版的 Antigravity 壓縮包（例如：`Antigravity.tar.gz` 或 `Antigravity IDE.tar.gz`）。
+1. 前往官網下載最新版的壓縮檔：
+   - 若要更新 **Antigravity 2.0**：請下載 `Antigravity.tar.gz`
+   - 若要更新 **Antigravity IDE**：請下載 `Antigravity IDE.tar.gz`
 2. 在檔案管理員中，對著下載好的檔案點擊「右鍵」。
 3. 選擇 **指令碼 (Scripts) -> Update Antigravity**。
 4. 圖形介面會自動啟動，並顯示進度條引導您完成更新。

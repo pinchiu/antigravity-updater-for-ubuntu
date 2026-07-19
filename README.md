@@ -8,7 +8,9 @@ On Linux, the official update mechanism for Antigravity is far from ideal. Every
 To solve this pain point, this project provides a fully automated solution.
 
 Once you have this script installed, updating is as simple as:
-1. Download the latest `.tar.gz` archive from the official website.
+1. Download the latest `.tar.gz` archive from the official website:
+   - To update **Antigravity 2.0 (Main App)**: download `Antigravity.tar.gz`
+   - To update **Antigravity IDE**: download `Antigravity IDE.tar.gz`
 2. Right-click the downloaded archive and choose **Scripts -> Update Antigravity**.
 3. The script will automatically handle the entire upgrade process (supports upgrading both `Antigravity 2.0` and `Antigravity IDE`).
 
@@ -73,7 +75,9 @@ bash install_nautilus.sh
 
 ### Method 1: Nautilus File Manager (Recommended)
 This is the easiest way to update. Once you've set up the Nautilus script:
-1. Download the latest Antigravity package (e.g., `Antigravity.tar.gz` or `Antigravity IDE.tar.gz`).
+1. Download the latest archive from the official website:
+   - To update **Antigravity 2.0**: download `Antigravity.tar.gz`
+   - To update **Antigravity IDE**: download `Antigravity IDE.tar.gz`
 2. Right-click the downloaded file in your file manager.
 3. Select **Scripts -> Update Antigravity**.
 4. The GUI will appear and guide you through the update process, showing a progress bar.
