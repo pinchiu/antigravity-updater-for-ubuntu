@@ -9,17 +9,18 @@ import tempfile
 import subprocess
 import time
 import locale
+import inspect
 
 # --- i18n Translation Dictionary ---
 LANGUAGES = {
     "en": {
         "title": "Antigravity Updater",
         "file_picker_title": "Select the downloaded Antigravity archive (.tar.gz)",
-        "unrecognized_file": "Unrecognized filename: {filename}\nPlease ensure the filename contains 'Antigravity', 'IDE' or 'cli'.",
+        "unrecognized_file": "Unrecognized filename: {filename}\nPlease ensure the filename contains 'Antigravity' or 'IDE'.",
         "preparing": "Preparing update...",
         "extracting": "Extracting installation package...",
         "installing": "Installing files and setting up shortcuts...",
-        "err_no_executable": "Could not find executable in the archive",
+
         "err_no_folder": "Could not find Antigravity directory in the archive",
         "err_no_ide_folder": "Could not find 'Antigravity IDE' directory in the archive",
         "updating_cache": "Updating desktop launcher cache...",
@@ -30,11 +31,11 @@ LANGUAGES = {
     "zh": {
         "title": "Antigravity 更新器",
         "file_picker_title": "選擇下載好的 Antigravity 壓縮檔 (.tar.gz)",
-        "unrecognized_file": "無法識別的檔案名稱：{filename}\n請確保檔案名稱包含 'Antigravity'、'IDE' 或 'cli'。",
+        "unrecognized_file": "無法識別的檔案名稱：{filename}\n請確保檔案名稱包含 'Antigravity' 或 'IDE'。",
         "preparing": "正在準備更新...",
         "extracting": "正在解壓縮安裝包...",
         "installing": "正在安裝檔案與設定捷徑...",
-        "err_no_executable": "無法在壓縮包中找到執行檔",
+
         "err_no_folder": "無法在壓縮包中找到 Antigravity 目錄",
         "err_no_ide_folder": "無法在壓縮包中找到 'Antigravity IDE' 目錄",
         "updating_cache": "正在更新桌面啟動器快取...",
@@ -44,16 +45,22 @@ LANGUAGES = {
     }
 }
 
-# Detect system language
-sys_lang, _ = locale.getlocale()
-if not sys_lang:
-    try:
-        sys_lang, _ = locale.getdefaultlocale()
-    except Exception:
-        sys_lang = "en_US"
+# Module-level language setting, initialized by detect_language()
+current_lang = "en"
 
-# Default to English unless the locale starts with "zh"
-current_lang = "zh" if sys_lang and sys_lang.lower().startswith("zh") else "en"
+def detect_language():
+    """Detect system language and set the module-level current_lang variable"""
+    global current_lang
+    try:
+        sys_lang, _ = locale.getlocale()
+    except Exception:
+        sys_lang = None
+
+    if not sys_lang:
+        sys_lang = os.environ.get('LANG', 'en_US')
+
+    # Default to English unless the locale starts with "zh"
+    current_lang = "zh" if sys_lang and sys_lang.lower().startswith("zh") else "en"
 
 def _(key, **kwargs):
     """Translation helper function"""
@@ -72,9 +79,12 @@ def update_desktop_launchers():
     home = os.path.expanduser("~")
     os.makedirs(app_dir, exist_ok=True)
     
-    # Hub desktop launcher
-    hub_desktop = os.path.join(app_dir, "antigravity.desktop")
-    hub_content = f"""[Desktop Entry]
+    # Antigravity desktop launcher (only if installed)
+    hub_exe = f"{home}/.local/share/antigravity/antigravity"
+    if os.path.exists(hub_exe):
+        hub_desktop = os.path.join(app_dir, "antigravity.desktop")
+        hub_content = f"""\
+[Desktop Entry]
 Name=Antigravity 2.0
 Comment=Antigravity Desktop Application
 Exec={home}/.local/share/antigravity/antigravity --no-sandbox %F
@@ -84,49 +94,76 @@ Categories=Development;IDE;
 Terminal=false
 StartupWMClass=antigravity
 """
-    try:
-        with open(hub_desktop, "w", encoding="utf-8") as f:
-            f.write(hub_content)
-    except Exception:
-        pass
+        try:
+            with open(hub_desktop, "w", encoding="utf-8") as f:
+                f.write(hub_content)
+        except Exception as e:
+            sys.stderr.write(f"Warning: Failed to write Antigravity desktop launcher: {e}\n")
         
-    # IDE desktop launcher
-    ide_desktop = os.path.join(app_dir, "antigravity-ide.desktop")
-    ide_content = f"""[Desktop Entry]
+    # IDE desktop launcher (only if IDE is installed)
+    ide_exe_primary = f"{home}/.local/share/antigravity-ide/bin/antigravity-ide"
+    ide_exe_fallback = f"{home}/.local/share/antigravity-ide/antigravity-ide"
+    if os.path.exists(ide_exe_primary) or os.path.exists(ide_exe_fallback):
+        ide_desktop = os.path.join(app_dir, "antigravity-ide.desktop")
+        ide_icon = f"{home}/.local/share/antigravity-ide/antigravity-ide.svg"
+        if not os.path.exists(ide_icon):
+            ide_icon = f"{home}/.local/share/antigravity/antigravity.svg"
+            
+        ide_content = f"""\
+[Desktop Entry]
 Name=Antigravity IDE
 Comment=AI-First Integrated Development Environment
 Exec={home}/.local/share/antigravity-ide/antigravity-ide --no-sandbox %F
-Icon={home}/.local/share/antigravity/antigravity.svg
+Icon={ide_icon}
 Type=Application
 Categories=Development;IDE;
 Terminal=false
 StartupWMClass=antigravity-ide
 """
-    try:
-        with open(ide_desktop, "w", encoding="utf-8") as f:
-            f.write(ide_content)
-    except Exception:
-        pass
+        try:
+            with open(ide_desktop, "w", encoding="utf-8") as f:
+                f.write(ide_content)
+        except Exception as e:
+            sys.stderr.write(f"Warning: Failed to write IDE desktop launcher: {e}\n")
         
     # Update system cache
     try:
         subprocess.run(["update-desktop-database", app_dir], capture_output=True, check=False)
-    except Exception:
-        pass
+    except Exception as e:
+        sys.stderr.write(f"Warning: Failed to update desktop database: {e}\n")
 
 def safe_replace_directory(src, dst):
     """Safely replace directory (using rename to avoid file lock conflicts, supporting hot updates)"""
+    temp_old = None
     if os.path.exists(dst):
         temp_old = dst + ".old." + str(int(time.time()))
         try:
             shutil.move(dst, temp_old)
-            shutil.rmtree(temp_old, ignore_errors=True)
-        except Exception:
-            pass
-    os.makedirs(os.path.dirname(dst), exist_ok=True)
-    shutil.move(src, dst)
+        except Exception as e:
+            sys.stderr.write(f"Failed to move old directory: {e}\n")
+            raise
+            
+    try:
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        shutil.move(src, dst)
+    except Exception as e:
+        if temp_old and os.path.exists(temp_old):
+            try:
+                shutil.move(temp_old, dst)
+            except Exception:
+                pass
+        sys.stderr.write(f"Failed to move new directory into place: {e}\n")
+        raise
+    finally:
+        if temp_old and os.path.exists(temp_old):
+            try:
+                shutil.rmtree(temp_old, ignore_errors=True)
+            except Exception as e:
+                sys.stderr.write(f"Warning: Failed to cleanup old directory: {e}\n")
 
 def main():
+    detect_language()
+    
     # Get file paths
     selected_file = None
     
@@ -150,8 +187,8 @@ def main():
             )
             if res.returncode == 0:
                 selected_file = res.stdout.strip()
-        except Exception:
-            pass
+        except Exception as e:
+            sys.stderr.write(f"Failed to open Zenity file picker: {e}\n")
             
     if not selected_file or not os.path.exists(selected_file):
         # User cancelled or file does not exist
@@ -161,15 +198,12 @@ def main():
     
     # Determine product type
     product_type = None
-    if "ide" in filename.lower():
+    if "-ide" in filename.lower() or " ide" in filename.lower():
         product_type = "ide"
         product_name = "Antigravity IDE"
-    elif "cli" in filename.lower() or "agy" in filename.lower():
-        product_type = "cli"
-        product_name = "Antigravity CLI"
     elif "antigravity" in filename.lower():
-        product_type = "hub"
-        product_name = "Antigravity Hub"
+        product_type = "app"
+        product_name = "Antigravity"
     else:
         # Unrecognized filename
         zenity_message("error", _("unrecognized_file", filename=filename))
@@ -183,11 +217,11 @@ def main():
     
     def set_progress(pct, text):
         try:
-            progress.stdin.write(f"{pct}\\n")
-            progress.stdin.write(f"# {text}\\n")
+            progress.stdin.write(f"{pct}\n")
+            progress.stdin.write(f"# {text}\n")
             progress.stdin.flush()
-        except Exception:
-            pass
+        except Exception as e:
+            sys.stderr.write(f"Warning: Failed to update progress bar: {e}\n")
 
     try:
         # 1. Extract files
@@ -195,38 +229,26 @@ def main():
         with tempfile.TemporaryDirectory() as tmpdir:
             with tarfile.open(selected_file, "r:gz") as tar:
                 # Compatibility for different Python extraction filters
-                import inspect
                 sig = inspect.signature(tarfile.TarFile.extractall)
                 if 'filter' in sig.parameters:
-                    tar.extractall(path=tmpdir, filter='fully_trusted')
+                    tar.extractall(path=tmpdir, filter='data')
                 else:
+                    # Fallback for older Python versions to prevent path traversal
+                    for member in tar.getmembers():
+                        member_path = os.path.abspath(os.path.join(tmpdir, member.name))
+                        if not member_path.startswith(os.path.abspath(tmpdir)):
+                            raise Exception("Path traversal attempt detected in tarball")
                     tar.extractall(path=tmpdir)
 
             set_progress(60, _("installing"))
             
             # Set installation target paths
-            cli_binary = os.path.expanduser("~/.local/bin/agy")
-            hub_dir = os.path.expanduser("~/.local/share/antigravity")
-            hub_link = os.path.expanduser("~/.local/bin/antigravity")
+            app_dir = os.path.expanduser("~/.local/share/antigravity")
+            app_link = os.path.expanduser("~/.local/bin/antigravity")
             ide_dir = os.path.expanduser("~/.local/share/antigravity-ide")
             ide_link = os.path.expanduser("~/.local/bin/antigravity-ide")
 
-            if product_type == "cli":
-                extracted_binary = os.path.join(tmpdir, "antigravity")
-                if not os.path.exists(extracted_binary):
-                    potential = [os.path.join(tmpdir, f) for f in os.listdir(tmpdir) if f.startswith("antigravity") or f.startswith("agy")]
-                    if potential:
-                        extracted_binary = potential[0]
-                    else:
-                        raise FileNotFoundError(_("err_no_executable"))
-                
-                os.makedirs(os.path.dirname(cli_binary), exist_ok=True)
-                if os.path.exists(cli_binary):
-                    os.remove(cli_binary)
-                shutil.move(extracted_binary, cli_binary)
-                os.chmod(cli_binary, 0o755)
-
-            elif product_type == "hub":
+            if product_type == "app":
                 extracted_folder = None
                 for item in os.listdir(tmpdir):
                     full_path = os.path.join(tmpdir, item)
@@ -238,15 +260,15 @@ def main():
                     raise FileNotFoundError(_("err_no_folder"))
                 
                 # Safe hot update
-                safe_replace_directory(extracted_folder, hub_dir)
+                safe_replace_directory(extracted_folder, app_dir)
                 
                 # Recreate shortcut links
-                target_exe = os.path.join(hub_dir, "antigravity")
+                target_exe = os.path.join(app_dir, "antigravity")
                 if os.path.exists(target_exe):
                     os.chmod(target_exe, 0o755)
-                    if os.path.exists(hub_link) or os.path.islink(hub_link):
-                        os.remove(hub_link)
-                    os.symlink(target_exe, hub_link)
+                    if os.path.exists(app_link) or os.path.islink(app_link):
+                        os.remove(app_link)
+                    os.symlink(target_exe, app_link)
 
             elif product_type == "ide":
                 extracted_folder = os.path.join(tmpdir, "Antigravity IDE")
@@ -273,7 +295,10 @@ def main():
         
         set_progress(100, _("complete"))
         progress.stdin.close()
-        progress.wait()
+        try:
+            progress.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            progress.kill()
         
         # Success prompt
         zenity_message("info", _("success", product_name=product_name))
@@ -281,10 +306,11 @@ def main():
     except Exception as e:
         try:
             progress.stdin.close()
-            progress.wait()
+            progress.wait(timeout=5)
         except Exception:
             pass
         zenity_message("error", _("error", error_msg=str(e)))
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
